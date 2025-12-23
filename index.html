@@ -1,1 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTX Docs Saúde — Agenda + Prontuário + Documentos</title>
 
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#19e28c">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./style.css?v=1.0.0">
+</head>
+
+<body>
+  <!-- TOPBAR -->
+  <header class="topbar no-print">
+    <div class="brand">
+      <div class="logo" aria-label="BTX">B</div>
+      <div class="brandtxt">
+        <h1>BTX Docs Saúde</h1>
+        <p>Agenda • Prontuário • Ficha • Receituário • Recibo • Orçamento • Laudo • Atestado — offline real</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <span class="pill" id="netPill">—</span>
+      <span class="pill" id="pwaPill">PWA: …</span>
+      <button class="btn btn-ghost" id="btnInstall" type="button" style="display:none;">Instalar</button>
+      <button class="btn btn-ghost" id="btnHardRefresh" type="button" title="Força atualizar PWA">Atualizar</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell">
+      <section class="screen">
+        <div class="layout">
+
+          <!-- LATERAL -->
+          <aside class="card no-print">
+            <h2>Profissional</h2>
+            <p class="small">
+              Esses dados entram automaticamente no cabeçalho/rodapé de todos os documentos.
+              Ficam salvos no aparelho (memória forte).
+            </p>
+
+            <label for="profNome">Nome completo</label>
+            <input id="profNome" placeholder="Ex.: Dr(a). Orlando..." />
+
+            <label for="profEsp">Especialidade</label>
+            <input id="profEsp" placeholder="Ex.: Cirurgião-dentista / Médico" />
+
+            <div class="row">
+              <div>
+                <label for="profConselho">Conselho</label>
+                <input id="profConselho" placeholder="CRO / CRM / CREFITO..." />
+              </div>
+              <div>
+                <label for="profReg">Registro</label>
+                <input id="profReg" placeholder="00000" />
+              </div>
+            </div>
+
+            <label for="profEnd">Endereço (vai no documento)</label>
+            <input id="profEnd" placeholder="Rua, nº, bairro, cidade - UF" />
+
+            <div class="row">
+              <div>
+                <label for="profTel">Telefone</label>
+                <input id="profTel" placeholder="(00) 00000-0000" />
+              </div>
+              <div>
+                <label for="profEmail">E-mail</label>
+                <input id="profEmail" placeholder="seuemail@dominio.com" />
+              </div>
+            </div>
+
+            <div class="actions" style="justify-content:flex-start; margin-top:12px;">
+              <button class="btn btn-ghost" type="button" id="btnProfLimpar">Limpar</button>
+              <button class="btn btn-primary" type="button" id="btnProfSalvar">Salvar</button>
+            </div>
+
+            <hr class="hr" />
+
+            <h2>Menu</h2>
+            <div class="tabs">
+              <button class="tabbtn active" data-tab="agenda">Agenda <span class="badge">dia/semana</span></button>
+              <button class="tabbtn" data-tab="prontuario">Prontuário <span class="badge">por paciente</span></button>
+              <button class="tabbtn" data-tab="ficha">Ficha clínica <span class="badge">paciente</span></button>
+              <button class="tabbtn" data-tab="receita">Receituário <span class="badge">1 clique</span></button>
+              <button class="tabbtn" data-tab="recibo">Recibo <span class="badge">pagamento</span></button>
+              <button class="tabbtn" data-tab="orcamento">Orçamento <span class="badge">itens</span></button>
+              <button class="tabbtn" data-tab="laudo">Laudo <span class="badge">relatório</span></button>
+              <button class="tabbtn" data-tab="atestado">Atestado <span class="badge">afastamento</span></button>
+            </div>
+
+            <hr class="hr" />
+
+            <h2>Backup</h2>
+            <p class="small">
+              Use isso pra não perder nada e também pra migrar entre aparelhos.
+            </p>
+
+            <div class="row">
+              <button class="btn btn-ghost" id="btnExportJSON" type="button">Exportar (JSON)</button>
+              <label class="btn btn-ghost filebtn" for="importFile">Importar (JSON)</label>
+              <input id="importFile" type="file" accept="application/json" style="display:none;">
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <button class="btn btn-danger" id="btnResetAll" type="button">Zerar tudo</button>
+            </div>
+
+            <p class="small" style="margin-top:10px;">
+              Dica: se algo “não atualiza”, aperta <b>Atualizar</b> lá em cima.
+            </p>
+          </aside>
+
+          <!-- CONTEÚDO -->
+          <section class="content">
+            <div class="content-header">
+              <div>
+                <h3 id="docTitle">Agenda</h3>
+                <div class="sub" id="docSub">Dia e Semana, offline, com memória forte.</div>
+              </div>
+              <div class="small">
+                Profissional: <span id="profResumo">—</span>
+              </div>
+            </div>
+
+            <div class="split">
+              <!-- FORM -->
+              <div class="panel no-print" id="formPanel"></div>
+
+              <!-- PREVIEW -->
+              <div class="panel">
+                <div class="actions no-print">
+                  <button class="btn btn-ghost" type="button" id="btnClearForm">Limpar</button>
+                  <button class="btn btn-ghost" type="button" id="btnDownloadHTML">Baixar (HTML)</button>
+                  <button class="btn btn-primary" type="button" id="btnPrint">Imprimir / PDF</button>
+                </div>
+
+                <div class="paper" id="paper">
+                  <div class="doc-header">
+                    <div class="doc-left">
+                      <div class="doc-brand">
+                        <div class="doc-logo">B</div>
+                        <div>
+                          <div class="doc-brand-title">BTX Docs Saúde</div>
+                          <div class="doc-brand-sub" id="docBrandSub">DOCUMENTOS CLÍNICOS • —</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="doc-meta" id="pvMeta"></div>
+                  </div>
+
+                  <div class="doc-blockline">
+                    <div class="doc-h-title" id="pvTitle">Agenda</div>
+                    <div class="doc-h-sub" id="pvSub">Dia e Semana, offline, com memória forte.</div>
+                  </div>
+
+                  <div id="pvBody"></div>
+
+                  <div class="doc-footer" id="pvFooter"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal" style="display:none;">
+    <div class="modalbox">
+      <div class="modalhead">
+        <div class="modalbrand">
+          <div class="doc-logo">B</div>
+          <div>
+            <div class="modaltitle">BTX Docs Saúde</div>
+            <div class="modalsub">Acesso rápido • offline real • memória forte</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modalbody">
+        <div class="small" style="margin-bottom:8px;">
+          Digite a chave de acesso do cliente. Padrão: <b>btx007</b>
+        </div>
+
+        <label for="loginKey">Chave</label>
+        <input id="loginKey" placeholder="btx007" autocomplete="off" autocapitalize="none" />
+
+        <div class="actions" style="margin-top:12px;">
+          <button class="btn btn-primary" id="btnLogin" type="button">Entrar</button>
+          <button class="btn btn-ghost" id="btnForgotKey" type="button">Esqueci / Trocar chave</button>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          *A chave é local (neste aparelho). Se quiser mudar depois, vá em Configurações.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./db.js?v=1.0.0"></script>
+  <script src="./app.js?v=1.0.0"></script>
+  <script src="./pwa.js?v=1.0.0"></script>
+</body>
+</html>
